@@ -1,0 +1,48 @@
+#!/usr/bin/env node
+
+var commander = require('commander');
+var url = require('url');
+var pan = require('../');
+
+commander
+  .version(require('../package.json').version)
+  .option('-v, --verbose', 'Show more infomation.');
+
+commander.on('--help', function() {
+  console.log();
+  console.log('  Example');
+  console.log();
+  console.log('    pan http://pan.baidu.com/share/link?shareid=&uk=');
+  console.log();
+});
+commander.parse(process.argv);
+
+
+var id = commander.args[0];
+if (!commander.args[0]) {
+  showHelp();
+}
+
+// http://pan.baidu.com/share/link?shareid=&uk=
+var parsed = url.parse(id);
+var passed = (parsed.query || '')
+  .split('&').every(function(o) {
+    return ['shareid', 'uk'].indexOf(o.split('=')[0]) > -1;
+  });
+
+if (passed) {
+  pan(id, function(err, result) {
+    if (err) showHelp();
+    result.forEach(function(url) {
+      console.log(url);
+    });
+  });
+} else {
+  showHelp();
+}
+
+function showHelp() {
+  process.stdout.write(commander.helpInformation());
+  commander.emit('--help');
+  process.exit();
+}
